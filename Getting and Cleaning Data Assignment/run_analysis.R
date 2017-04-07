@@ -42,5 +42,5 @@ activity$V2<-as.character(activity$V2)
 dataMelt <- melt(data,id=c("activity","subject"))
 dataMean <- dcast(dataMelt, activity + subject ~ variable, mean)
 
-write.table(dataMean, "tidyData.txt")
+write.table(dataMean, "tidyData.txt", row.names = FALSE)
 
