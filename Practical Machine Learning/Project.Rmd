@@ -1,0 +1,84 @@
+---
+title: 'Practical Machine Learning Project: Prediction Assignment'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Overview & Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks.
+
+The objective of this project is to predict the manner ( "classe" variable) the participants performed some of the exercices using data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants.
+
+# Data processing
+## Loading and cleaning the data
+
+Let's first load the data.
+
+```{r }
+library(caret)
+library(lattice)
+library(ggplot2)
+library(randomForest)
+library(rpart)
+training<-read.csv("pml-training.csv")
+testing<-read.csv("pml-testing.csv")
+```
+
+There is a lot of columns which only include NA value. Those must be discarded.
+
+```{r }
+NAvalue<-data.frame(sapply(training,function(x) sum(is.na(x))))
+table(NAvalue)
+training <- training[, colSums(is.na(training)) == 0]
+```
+
+We now have a training set of 19622 observations and 93 variables. We can furthermore remove the variables that have very few unique value using the nearZeroVar function.
+
+We also remove the identification variables.
+
+```{r }
+nvz<-nearZeroVar(training)
+training <- training[,-nvz]
+training<-training[,-c(1:5)]
+```
+
+We end up with a training set of 19622 observations and 54 variables.
+
+# Prediction algorithms
+## Data split
+
+First, we are going to split the training set in order to compute the out-of-sample errors.
+
+```{r }
+set.seed(1234)
+inTrain <- createDataPartition(training$classe, p=0.7, list=FALSE)
+train <- training[inTrain, ]
+validation <- training[-inTrain, ]
+```
+
+
+## Selecting a model
+
+We now are going to use 3 algorithms (RF,) to  build a model using the train dataset. After that, we are going to predict the outcome using the validation set. We will select the model with the highest accuracy and apply it on the testing dataset.
+
+```{r }
+control <- trainControl(method="cv", number=3)
+modelRF<-train(classe ~ ., data=train, method="rf",trControl=control)
+ModelRPART<-train(classe ~ ., data=train, method="rpart",trControl=control)
+
+predRF<-predict(modelRF,validation)
+predRPART<-predict(ModelRPART,validation)
+
+confusionMatrix(predRF, validation$classe)$overall['Accuracy']
+confusionMatrix(predRPART, validation$classe)$overall['Accuracy']
+```
+
+From the prediction result, we can affirm that the random forest algorithm (accuracy `r confusionMatrix(predRF, validation$classe)$overall['Accuracy']`)
+ is better than the classification tree algorithm (accuracy `r confusionMatrix(predRPART, validation$classe)$overall['Accuracy']`). Thus, we will use this model to predict the outcome of the testing dataset.
+ 
+```{r }
+predtest<-predict(modelRF,testing)
+predtest
+```
