@@ -1,9 +1,7 @@
-setwd("d:/Profiles/anajji/Desktop/Learning/R/Data Science Capstone")
+
 
 source("Process.R")
 source("PredictNextWord.R")
-
-setwd("d:/Profiles/anajji/Desktop/Learning/R/Data Science Capstone/final/en_US")
 
 set.seed(1010)
 p = 0.75
